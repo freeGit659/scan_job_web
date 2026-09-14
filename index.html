@@ -24,7 +24,7 @@ async function extractJDAndSave(apiKey, jdText, cvFileUrl) {
   jobPayload.status = "Chưa gửi CV";
   
   // 2. Đẩy dữ liệu qua Google Sheets Webhook
-  const WEBHOOK_URL = "DÁN_URL_WEB_APP_APPS_SCRIPT_TẠI_ĐÂY";
+  const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwjoEjuD7zyU-bHLQmOT8djTl7l4t6ylm7HIdB5vWQ0aHdfuqR8eXnO9DQwmjGyvBeOmw/exec";
   await fetch(WEBHOOK_URL, {
     method: "POST",
     mode: "no-cors",
