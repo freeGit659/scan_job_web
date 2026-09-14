@@ -1,0 +1,35 @@
+// 1. Phân tích JD bằng Gemini 1.5 Flash (hỗ trợ text, ảnh base64 hoặc PDF)
+async function extractJDAndSave(apiKey, jdText, cvFileUrl) {
+  const prompt = `Phân tích JD sau và trả về duy nhất chuỗi JSON (không bọc markdown \`\`\`json):
+  {
+    "company_name": "Tên công ty",
+    "job_title": "Tên vị trí",
+    "salary": "Mức lương đề xuất",
+    "requirements": "Yêu cầu chính ngắn gọn",
+    "jd_summary": "Tóm tắt trách nhiệm công việc 2 câu",
+    "location": "Địa điểm làm việc",
+    "contact": "Email hoặc liên hệ"
+  }`;
+  
+  const res = await fetch(`[link removed]{apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt + "\\n\\nNỘI DUNG JD:\\n" + jdText }] }] })
+  });
+  
+  const geminiData = await res.json();
+  const rawText = geminiData.candidates[0].content.parts[0].text.trim();
+  const jobPayload = JSON.parse(rawText.replace(/```json|```/g, ""));
+  jobPayload.cv_link = cvFileUrl;
+  jobPayload.status = "Chưa gửi CV";
+  
+  // 2. Đẩy dữ liệu qua Google Sheets Webhook
+  const WEBHOOK_URL = "DÁN_URL_WEB_APP_APPS_SCRIPT_TẠI_ĐÂY";
+  await fetch(WEBHOOK_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(jobPayload)
+  });
+  alert("🎉 Đã tóm tắt bằng Gemini và lưu thành công vào Google Sheet!");
+}
