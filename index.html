@@ -1,35 +1,349 @@
-// 1. Phân tích JD bằng Gemini 1.5 Flash (hỗ trợ text, ảnh base64 hoặc PDF)
-async function extractJDAndSave(apiKey, jdText, cvFileUrl) {
-  const prompt = `Phân tích JD sau và trả về duy nhất chuỗi JSON (không bọc markdown \`\`\`json):
-  {
-    "company_name": "Tên công ty",
-    "job_title": "Tên vị trí",
-    "salary": "Mức lương đề xuất",
-    "requirements": "Yêu cầu chính ngắn gọn",
-    "jd_summary": "Tóm tắt trách nhiệm công việc 2 câu",
-    "location": "Địa điểm làm việc",
-    "contact": "Email hoặc liên hệ"
-  }`;
-  
-  const res = await fetch(`[link removed]{apiKey}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ contents: [{ parts: [{ text: prompt + "\\n\\nNỘI DUNG JD:\\n" + jdText }] }] })
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trợ Lý Ứng Tuyển JD ➔ Google Sheets</title>
+  <style>
+    :root {
+      --primary: #1a73e8;
+      --primary-hover: #1557b0;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --error: #ef4444;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px 16px; display: flex; justify-content: center; }
+    .container { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 20px; }
+
+    .card { background: var(--card-bg); border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+    h1 { font-size: 1.5rem; margin-bottom: 8px; color: #0f172a; display: flex; align-items: center; gap: 8px; }
+    p.subtitle { font-size: 0.875rem; color: var(--text-muted); margin-bottom: 20px; }
+
+    .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; color: #334155; }
+    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.875rem; font-weight: 500; color: #334155; }
+    input[type="text"], input[type="password"], select, textarea {
+      width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); ring: 2px rgba(26,115,232,0.2); }
+    textarea { resize: vertical; min-height: 120px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* Drag and drop zone */
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 8px; padding: 20px; text-align: center;
+      cursor: pointer; transition: all 0.2s ease; background: #fdfdfd;
+    }
+    .drop-zone.dragover { border-color: var(--primary); background: #f0f7ff; }
+    .drop-zone p { font-size: 0.85rem; color: var(--text-muted); }
+    .file-preview { margin-top: 8px; font-size: 0.85rem; font-weight: 500; color: var(--primary); display: none; }
+
+    /* Button */
+    button.btn-primary {
+      background: var(--primary); color: white; border: none; border-radius: 8px; padding: 14px;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; display: flex;
+      justify-content: center; align-items: center; gap: 8px; width: 100%;
+    }
+    button.btn-primary:hover { background: var(--primary-hover); }
+    button.btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    /* Status alert */
+    .status-box { padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; margin-top: 14px; display: none; }
+    .status-box.success { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; display: block; }
+    .status-box.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; display: block; }
+    .status-box.loading { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; display: block; }
+
+    .preview-box { margin-top: 16px; padding: 14px; background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; display: none; }
+    pre { white-space: pre-wrap; word-break: break-word; font-family: monospace; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="card">
+    <h1>🚀 Job Hunter AI ➔ Sheets</h1>
+    <p class="subtitle">Trích xuất thông tin tuyển dụng bằng Gemini AI và tự động lưu vào Google Sheets.</p>
+
+    <!-- CẤU HÌNH API & MODEL -->
+    <div class="section-title">⚙️ Cấu hình hệ thống (Tự lưu trong trình duyệt)</div>
+    
+    <div class="form-group">
+      <label for="apiKey">Gemini API Key:</label>
+      <input type="password" id="apiKey" placeholder="Dán khóa API (bắt đầu bằng AIzaSy...)" />
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label for="modelSelect">Chọn Model Gemini:</label>
+        <select id="modelSelect" onchange="onModelChange()">
+          <option value="gemini-2.5-flash">Gemini 2.5 Flash (Tối ưu & Tốc độ cao)</option>
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ổn định)</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro (Đọc văn bản sâu)</option>
+          <option value="custom">-- Nhập Model tùy biến --</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="customModelGroup" style="display: none;">
+        <label for="customModelInput">Tên Model tùy biến:</label>
+        <input type="text" id="customModelInput" placeholder="Ví dụ: gemini-3.8-flash" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="webhookUrl">URL Google Apps Script Webhook:</label>
+      <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+    </div>
+  </div>
+
+  <!-- NỘI DUNG JD CẦN PHÂN TÍCH -->
+  <div class="card">
+    <div class="section-title">📄 Nhập nội dung tuyển dụng (JD)</div>
+
+    <div class="form-group">
+      <label>Kéo thả ảnh chụp màn hình JD hoặc file PDF (Tùy chọn):</label>
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <p>📷 Kéo thả ảnh (PNG/JPG) hoặc file PDF vào đây, hoặc <strong>nhấn để chọn file</strong></p>
+        <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp, application/pdf" style="display: none;" onchange="handleFileSelect(event)" />
+        <div class="file-preview" id="filePreview"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="jdText">Hoặc dán toàn bộ văn bản JD vào đây:</label>
+      <textarea id="jdText" placeholder="Dán nội dung tin tuyển dụng gồm tên công ty, mô tả công việc, mức lương, yêu cầu..."></textarea>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label for="cvUrl">Đường dẫn CV ứng tuyển (Tùy chọn):</label>
+        <input type="text" id="cvUrl" placeholder="Link Google Drive / Cloudinary CV của bạn" />
+      </div>
+      <div class="form-group">
+        <label for="initialStatus">Trạng thái ban đầu:</label>
+        <select id="initialStatus">
+          <option value="Chưa gửi CV" selected>Chưa gửi CV</option>
+          <option value="Đã gửi CV">Đã gửi CV</option>
+          <option value="Đã được mời phỏng vấn">Đã được mời phỏng vấn</option>
+        </select>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" id="submitBtn" onclick="processAndSend()">
+      ✨ Phân Tích Bằng Gemini & Lưu Vào Google Sheet
+    </button>
+
+    <div class="status-box" id="statusBox"></div>
+
+    <div class="preview-box" id="previewBox">
+      <strong>Kết quả phân tích từ Gemini:</strong>
+      <pre id="jsonPreview"></pre>
+    </div>
+  </div>
+</div>
+
+<script>
+  let attachedFile = null; // Lưu trữ file dạng base64
+
+  // 1. Khởi tạo & nạp cài đặt từ localStorage khi tải trang
+  window.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('apiKey').value = localStorage.getItem('GEMINI_API_KEY') || '';
+    document.getElementById('webhookUrl').value = localStorage.getItem('SHEETS_WEBHOOK_URL') || '';
+    
+    const savedModel = localStorage.getItem('GEMINI_MODEL') || 'gemini-2.5-flash';
+    const modelSelect = document.getElementById('modelSelect');
+    
+    if (['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'].includes(savedModel)) {
+      modelSelect.value = savedModel;
+    } else {
+      modelSelect.value = 'custom';
+      document.getElementById('customModelGroup').style.display = 'block';
+      document.getElementById('customModelInput').value = savedModel;
+    }
+
+    // Tự động lưu cài đặt khi người dùng gõ
+    document.getElementById('apiKey').addEventListener('input', (e) => localStorage.setItem('GEMINI_API_KEY', e.target.value.trim()));
+    document.getElementById('webhookUrl').addEventListener('input', (e) => localStorage.setItem('SHEETS_WEBHOOK_URL', e.target.value.trim()));
+    document.getElementById('customModelInput').addEventListener('input', (e) => localStorage.setItem('GEMINI_MODEL', e.target.value.trim()));
   });
-  
-  const geminiData = await res.json();
-  const rawText = geminiData.candidates[0].content.parts[0].text.trim();
-  const jobPayload = JSON.parse(rawText.replace(/```json|```/g, ""));
-  jobPayload.cv_link = cvFileUrl;
-  jobPayload.status = "Chưa gửi CV";
-  
-  // 2. Đẩy dữ liệu qua Google Sheets Webhook
-  const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwjoEjuD7zyU-bHLQmOT8djTl7l4t6ylm7HIdB5vWQ0aHdfuqR8eXnO9DQwmjGyvBeOmw/exec";
-  await fetch(WEBHOOK_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(jobPayload)
+
+  function onModelChange() {
+    const select = document.getElementById('modelSelect');
+    const customGroup = document.getElementById('customModelGroup');
+    if (select.value === 'custom') {
+      customGroup.style.display = 'block';
+      const customVal = document.getElementById('customModelInput').value.trim() || 'gemini-3.8-flash';
+      document.getElementById('customModelInput').value = customVal;
+      localStorage.setItem('GEMINI_MODEL', customVal);
+    } else {
+      customGroup.style.display = 'none';
+      localStorage.setItem('GEMINI_MODEL', select.value);
+    }
+  }
+
+  function getActiveModel() {
+    const selectVal = document.getElementById('modelSelect').value;
+    if (selectVal === 'custom') {
+      return document.getElementById('customModelInput').value.trim() || 'gemini-2.5-flash';
+    }
+    return selectVal;
+  }
+
+  // 2. Xử lý tải ảnh hoặc PDF (Multimodal)
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    readFile(file);
+  }
+
+  // Hỗ trợ kéo thả
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]);
   });
-  alert("🎉 Đã tóm tắt bằng Gemini và lưu thành công vào Google Sheet!");
-}
+
+  function readFile(file) {
+    const preview = document.getElementById('filePreview');
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const base64Data = evt.target.result.split(',')[1];
+      attachedFile = {
+        mimeType: file.type,
+        data: base64Data
+      };
+      preview.style.display = 'block';
+      preview.textContent = `📎 Đã đính kèm: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // 3. Quy trình chính: Gọi Gemini API & Gửi Webhook
+  async function processAndSend() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const webhookUrl = document.getElementById('webhookUrl').value.trim();
+    const jdText = document.getElementById('jdText').value.trim();
+    const cvUrl = document.getElementById('cvUrl').value.trim();
+    const statusVal = document.getElementById('initialStatus').value;
+    const model = getActiveModel();
+
+    const statusBox = document.getElementById('statusBox');
+    const previewBox = document.getElementById('previewBox');
+    const jsonPreview = document.getElementById('jsonPreview');
+    const submitBtn = document.getElementById('submitBtn');
+
+    if (!apiKey) {
+      alert('Vui lòng nhập Gemini API Key trước!');
+      return;
+    }
+    if (!webhookUrl) {
+      alert('Vui lòng nhập URL Google Apps Script Webhook!');
+      return;
+    }
+    if (!jdText && !attachedFile) {
+      alert('Vui lòng dán văn bản JD hoặc tải lên file ảnh / PDF của JD!');
+      return;
+    }
+
+    try {
+      submitBtn.disabled = true;
+      statusBox.className = 'status-box loading';
+      statusBox.textContent = `🤖 Đang gửi yêu cầu đến model [${model}] để trích xuất JD...`;
+      previewBox.style.display = 'none';
+
+      // Tạo prompt chỉ định trích xuất định dạng JSON
+      const systemInstruction = `Bạn là trợ lý nhân sự chuyên nghiệp. Hãy đọc kỹ JD (dạng văn bản, hình ảnh chụp hoặc file PDF đính kèm) và trích xuất thông tin thành duy nhất một chuỗi JSON hợp lệ với đúng cấu trúc sau:
+{
+  "company_name": "Tên công ty tuyển dụng",
+  "job_title": "Chức danh vị trí ứng tuyển",
+  "salary": "Mức lương ghi trong JD (hoặc 'Thỏa thuận')",
+  "requirements": "3-5 yêu cầu kỹ năng/kinh nghiệm cốt lõi, ngắn gọn",
+  "jd_summary": "Tóm tắt trách nhiệm chính và công việc trong 1-2 câu",
+  "location": "Địa điểm làm việc (Hà Nội, TP.HCM, Remote...)",
+  "contact": "Email hoặc số điện thoại liên hệ HR"
+}`;
+
+      const contentsParts = [];
+      if (jdText) {
+        contentsParts.push({ text: `VĂN BẢN TIN TUYỂN DỤNG:\n${jdText}` });
+      }
+      if (attachedFile) {
+        contentsParts.push({
+          inlineData: {
+            mimeType: attachedFile.mimeType,
+            data: attachedFile.data
+          }
+        });
+      }
+
+      // Gọi Gemini API v1beta
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const geminiRes = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents: [{ parts: contentsParts }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.2
+          }
+        })
+      });
+
+      if (!geminiRes.ok) {
+        const errData = await geminiRes.json();
+        throw new Error(`Lỗi Gemini API (${geminiRes.status}): ${errData.error?.message || 'Không xác định'}`);
+      }
+
+      const geminiData = await geminiRes.json();
+      const rawJson = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawJson) throw new Error('Gemini không trả về nội dung!');
+
+      const parsedPayload = JSON.parse(rawJson);
+      parsedPayload.cv_link = cvUrl;
+      parsedPayload.status = statusVal;
+
+      // Hiển thị kết quả preview
+      jsonPreview.textContent = JSON.stringify(parsedPayload, null, 2);
+      previewBox.style.display = 'block';
+
+      // Đẩy dữ liệu sang Google Apps Script Webhook
+      statusBox.textContent = '🚀 Đang lưu thông tin vào Google Sheets...';
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsedPayload)
+      });
+
+      statusBox.className = 'status-box success';
+      statusBox.innerHTML = `🎉 <strong>Thành công!</strong> Đã thêm vị trí <strong>${parsedPayload.job_title}</strong> tại <strong>${parsedPayload.company_name}</strong> vào Google Sheet.`;
+
+      // Xóa form văn bản để sẵn sàng cho job tiếp theo
+      document.getElementById('jdText').value = '';
+      attachedFile = null;
+      document.getElementById('filePreview').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+
+    } catch (err) {
+      statusBox.className = 'status-box error';
+      statusBox.textContent = `❌ Đã xảy ra lỗi: ${err.message}`;
+    } finally {
+      submitBtn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
