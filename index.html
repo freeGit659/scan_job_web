@@ -347,3 +347,1057 @@
 
 </body>
 </html>
+Hướng dẫn sử dụng:
+Mở trang web đã deploy trên GitHub Pages.
+Dán Gemini API Key và URL Apps Script Webhook (hệ thống sẽ tự lưu vào trình duyệt, chỉ cần dán 1 lần duy nhất).
+Chọn model mong muốn (hoặc gõ model mới bất kỳ).
+Kéo thả ảnh chụp tin tuyển dụng hoặc dán văn bản JD và bấm nút "Phân Tích Bằng Gemini & Lưu Vào Google Sheet". Dòng dữ liệu mới sẽ ngay lập tức được tạo trong trang tính Theo dõi ứng tuyển.
+Hãy viết lại file index.html hoàn chỉnh chỉ cần copy. Tôi muốn có tab thống kê các job tôi đã sưu tầm. Nó sẽ có dạng như các trang tìm việc: topcv, vieclamtot,... Hãy tối ưu có thiết bị điện thoại màn hình dọc. Thêm model gemini-3.6-flash
+Câu trả lời của Gemini
+Dưới đây là toàn bộ mã nguồn file index.html hoàn chỉnh 100%. Bạn chỉ cần tạo mới hoặc thay thế toàn bộ file index.html trong repository GitHub của bạn, commit lên và tận hưởng giao diện mới.Những nâng cấp nổi bật trong phiên bản này:
+Giao diện thẻ tuyển dụng phong cách TopCV / Việc Làm Tốt: Các job đã lưu được hiển thị dạng thẻ danh sách với logo avatar công ty, huy hiệu mức lương xanh lá nổi bật, tag kỹ năng, địa điểm và trạng thái tuyển dụng.
+Thanh thống kê KPI Mini: Đếm số lượng theo thời gian thực (Tổng số job, Chưa nộp, Đã nộp, Mời phỏng vấn, Đã từ chối).
+Thanh tìm kiếm & Bộ lọc nhanh: Lọc tức thì theo từ khóa tên công việc, công ty hoặc theo từng trạng thái hồ sơ.
+Bổ sung Model gemini-3.6-flash: Đã tích hợp sẵn trong danh sách chọn model và mặc định kích hoạt; có thể tùy chọn thêm gemini-2.5-flash, gemini-1.5-flash hoặc model tự nhập.
+Tối ưu Mobile-First (Màn hình dọc): Bố cục thẻ 1 cột co giãn mượt mà, thanh điều hướng đáy (Bottom Navigation Bar) chuẩn ứng dụng di động, các nút bấm to dễ thao tác bằng ngón tay cái.
+Lưu trữ Offline & Online: Tự động lưu trữ danh sách job vào localStorage của điện thoại/trình duyệt để xem lại bất cứ lúc nào, đồng thời bắn Webhook sang Google Sheet để cập nhật bảng tính.
+Mã nguồn hoàn chỉnh: index.html
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>JobRadar AI - Quản Lý & Phân Tích Tin Tuyển Dụng</title>
+  <style>
+    :root {
+      --primary: #00b14f; /* Màu xanh lá đặc trưng TopCV */
+      --primary-dark: #008f3f;
+      --primary-light: #e8f7ee;
+      --secondary: #0a2540;
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #0284c7;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); padding-bottom: 80px; min-height: 100vh; }
+
+    /* Top Bar Mobile */
+    header.app-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.15rem; color: var(--secondary); }
+    .brand span { color: var(--primary); }
+    .header-badge { font-size: 0.75rem; background: var(--primary-light); color: var(--primary-dark); padding: 4px 8px; border-radius: 20px; font-weight: 600; }
+
+    /* Main Container */
+    .container { max-width: 680px; margin: 0 auto; padding: 14px 12px; }
+
+    /* Bottom Navigation Bar for Mobile */
+    nav.bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+      z-index: 100;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 4px 12px;
+      transition: color 0.15s;
+    }
+    .nav-item svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; }
+    .nav-item.active { color: var(--primary); }
+
+    /* View Sections */
+    .view-section { display: none; }
+    .view-section.active { display: block; animation: fadeIn 0.2s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Card Component */
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      margin-bottom: 14px;
+    }
+    .card-title { font-size: 1rem; font-weight: 700; color: var(--secondary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+    /* Statistics / KPIs */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+    .stat-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 6px;
+      text-align: center;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .stat-pill .num { font-size: 1.15rem; font-weight: 800; color: var(--secondary); display: block; }
+    .stat-pill .lbl { font-size: 0.65rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-top: 2px; display: block; }
+    .stat-pill.active { border-color: var(--primary); background: #f0fdf4; }
+
+    /* Search & Filter bar */
+    .filter-bar { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+    .search-input-wrap { position: relative; width: 100%; }
+    .search-input-wrap input {
+      width: 100%;
+      padding: 11px 12px 11px 36px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      background: var(--surface);
+      outline: none;
+    }
+    .search-input-wrap svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      stroke: var(--text-muted);
+    }
+    .chips-filter { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+    .chips-filter::-webkit-scrollbar { display: none; }
+    .chip {
+      white-space: nowrap;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    /* Job Card (TopCV Style) */
+    .job-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      transition: transform 0.1s ease, border-color 0.15s;
+    }
+    .job-card:active { transform: scale(0.99); }
+    .job-header { display: flex; gap: 12px; align-items: flex-start; }
+    .company-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #00b14f, #0a2540);
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .job-info { flex: 1; min-width: 0; }
+    .job-title {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--secondary);
+      line-height: 1.35;
+      margin-bottom: 3px;
+      word-break: break-word;
+    }
+    .company-name { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .salary-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ecfdf5;
+      color: #047857;
+      font-weight: 700;
+      font-size: 0.82rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      width: fit-content;
+      border: 1px solid #a7f3d0;
+    }
+    .tags-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      font-size: 0.72rem;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .jd-summary-box {
+      font-size: 0.8rem;
+      color: #334155;
+      background: #f8fafc;
+      padding: 8px 10px;
+      border-radius: 8px;
+      line-height: 1.45;
+      border-left: 3px solid var(--primary);
+    }
+
+    .job-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 8px;
+      border-top: 1px dashed var(--border);
+      gap: 8px;
+    }
+    .status-select {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 1px solid transparent;
+      outline: none;
+      cursor: pointer;
+    }
+    .status-chua-nop { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
+    .status-da-nop { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+    .status-phong-van { background: #dcfce7; color: #15803d; border-color: #86efac; }
+    .status-tu-choi { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+
+    .action-icons { display: flex; gap: 6px; }
+    .icon-btn {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+    .icon-btn:hover { color: var(--secondary); background: #f1f5f9; }
+    .icon-btn.delete:hover { color: var(--danger); border-color: #fecaca; background: #fff1f2; }
+
+    /* Form Fields */
+    .form-group { margin-bottom: 14px; display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.82rem; font-weight: 600; color: #334155; }
+    input[type="text"], input[type="password"], select, textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      background: var(--surface);
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    textarea { resize: vertical; min-height: 110px; }
+
+    /* Drop Zone File */
+    .drop-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      background: #fafafa;
+      transition: all 0.2s;
+    }
+    .drop-zone.dragover { border-color: var(--primary); background: var(--primary-light); }
+    .drop-zone p { font-size: 0.8rem; color: var(--text-muted); }
+    .file-preview { margin-top: 6px; font-size: 0.8rem; color: var(--primary-dark); font-weight: 600; }
+
+    /* Buttons */
+    .btn-submit {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,177,79,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-submit:hover { background: var(--primary-dark); }
+    .btn-submit:disabled { background: #94a3b8; cursor: not-allowed; box-shadow: none; }
+
+    .status-box {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      display: none;
+      line-height: 1.4;
+    }
+    .status-box.loading { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; display: block; }
+    .status-box.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; display: block; }
+    .status-box.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; display: block; }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 16px; color: var(--text-muted); }
+    .empty-state svg { width: 56px; height: 56px; stroke: #cbd5e1; margin-bottom: 12px; }
+    .empty-state h3 { font-size: 1rem; color: var(--secondary); margin-bottom: 6px; }
+    .empty-state p { font-size: 0.82rem; margin-bottom: 16px; }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 200;
+    }
+    .modal-sheet {
+      background: var(--surface);
+      width: 100%;
+      max-width: 600px;
+      border-radius: 16px 16px 0 0;
+      padding: 20px 16px calc(24px + env(safe-area-inset-bottom));
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: slideUp 0.25s ease-out;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-title { font-size: 1.1rem; font-weight: 700; color: var(--secondary); }
+    .close-btn { background: none; border: none; font-size: 1.4rem; color: var(--text-muted); cursor: pointer; }
+    .modal-row { margin-bottom: 12px; font-size: 0.85rem; }
+    .modal-row strong { display: block; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; margin-bottom: 3px; }
+
+    /* Grid 2 */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+      JobRadar<span>.AI</span>
+    </div>
+    <div class="header-badge" id="activeModelLabel">gemini-3.6-flash</div>
+  </header>
+
+  <div class="container">
+
+    <!-- VIEW 1: DANH SÁCH JOB (TOPCV STYLE) -->
+    <section id="view-list" class="view-section active">
+      <!-- KPI Stats -->
+      <div class="stats-grid">
+        <div class="stat-pill active" onclick="setFilter('Tất cả')">
+          <span class="num" id="count-all">0</span>
+          <span class="lbl">Tất cả</span>
+        </div>
+        <div class="stat-pill" onclick="setFilter('Chưa gửi CV')">
+          <span class="num" id="count-pending">0</span>
+          <span class="lbl">Chưa gửi</span>
+        </div>
+        <div class="stat-pill" onclick="setFilter('Đã gửi CV')">
+          <span class="num" id="count-sent">0</span>
+          <span class="lbl">Đã nộp</span>
+        </div>
+        <div class="stat-pill" onclick="setFilter('Đã được mời phỏng vấn')">
+          <span class="num" id="count-interview">0</span>
+          <span class="lbl">Phỏng vấn 🎉</span>
+        </div>
+      </div>
+
+      <!-- Filter and Search -->
+      <div class="filter-bar">
+        <div class="search-input-wrap">
+          <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="searchInput" placeholder="Tìm tên công việc, công ty, kỹ năng..." oninput="renderJobs()" />
+        </div>
+        <div class="chips-filter">
+          <button class="chip active" onclick="setFilter('Tất cả', this)">Tất cả</button>
+          <button class="chip" onclick="setFilter('Chưa gửi CV', this)">Chưa gửi CV</button>
+          <button class="chip" onclick="setFilter('Đã gửi CV', this)">Đã gửi CV</button>
+          <button class="chip" onclick="setFilter('Đã được mời phỏng vấn', this)">Mời phỏng vấn</button>
+          <button class="chip" onclick="setFilter('Đã bị từ chối', this)">Đã từ chối</button>
+        </div>
+      </div>
+
+      <!-- Jobs List Render Container -->
+      <div id="jobsListContainer"></div>
+    </section>
+
+    <!-- VIEW 2: THÊM JOB MỚI VỚI GEMINI AI -->
+    <section id="view-add" class="view-section">
+      <div class="card">
+        <div class="card-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+          Trích Xuất JD Bằng Gemini AI
+        </div>
+
+        <div class="form-group">
+          <label>Kéo thả ảnh chụp màn hình JD / File PDF:</label>
+          <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <p>📷 Kéo thả ảnh (PNG/JPG) hoặc PDF vào đây<br><strong>Hoặc bấm để chọn từ điện thoại</strong></p>
+            <input type="file" id="fileInput" accept="image/png, image/jpeg, image/webp, application/pdf" style="display: none;" onchange="handleFileSelect(event)" />
+            <div class="file-preview" id="filePreview" style="display: none;"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="jdText">Hoặc dán toàn bộ nội dung text của JD:</label>
+          <textarea id="jdText" placeholder="Copy và dán nội dung bài đăng tuyển dụng trên Facebook, TopCV, LinkedIn vào đây..."></textarea>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="cvUrl">Link CV đính kèm:</label>
+            <input type="text" id="cvUrl" placeholder="Link Google Drive / PDF..." />
+          </div>
+          <div class="form-group">
+            <label for="initialStatus">Trạng thái ban đầu:</label>
+            <select id="initialStatus">
+              <option value="Chưa gửi CV" selected>Chưa gửi CV</option>
+              <option value="Đã gửi CV">Đã gửi CV</option>
+              <option value="Đã được mời phỏng vấn">Đã được mời phỏng vấn</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="button" class="btn-submit" id="btnAnalyze" onclick="processAndSaveJob()">
+          ✨ Phân Tích & Lưu Tin Tuyển Dụng
+        </button>
+
+        <div class="status-box" id="statusBox"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: CÀI ĐẶT HỆ THỐNG & API -->
+    <section id="view-settings" class="view-section">
+      <div class="card">
+        <div class="card-title">⚙️ Cấu Hình Gemini & Google Sheets</div>
+        
+        <div class="form-group">
+          <label for="apiKey">Gemini API Key (Bắt đầu bằng AIza...):</label>
+          <input type="password" id="apiKey" placeholder="Dán khóa API Gemini của bạn..." />
+        </div>
+
+        <div class="form-group">
+          <label for="modelSelect">Phiên bản Mô Hình Gemini:</label>
+          <select id="modelSelect" onchange="onModelChange()">
+            <option value="gemini-3.6-flash" selected>Gemini 3.6 Flash (Mới nhất & Tốc độ cao)</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Ổn định)</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Đọc sâu tài liệu)</option>
+            <option value="custom">-- Tự nhập Model khác --</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="customModelGroup" style="display: none;">
+          <label for="customModelInput">Tên Model Tùy Biến:</label>
+          <input type="text" id="customModelInput" placeholder="Ví dụ: gemini-3.8-flash" />
+        </div>
+
+        <div class="form-group">
+          <label for="webhookUrl">Google Apps Script Webhook URL (Tùy chọn):</label>
+          <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/.../exec" />
+          <small style="color: var(--text-muted); font-size: 0.75rem;">Nếu điền, dữ liệu sẽ vừa lưu vào điện thoại vừa bắn thẳng vào Google Sheet của bạn.</small>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 16px 0;">
+
+        <div class="form-group">
+          <label>Quản lý dữ liệu trên máy:</label>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn-submit" style="background: #0284c7; padding: 10px;" onclick="loadSampleJobs()">
+              📥 Nạp 7 Job Mẫu Thực Tế
+            </button>
+            <button type="button" class="btn-submit" style="background: #ef4444; padding: 10px;" onclick="clearAllJobs()">
+              🗑️ Xóa Toàn Bộ Job
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Bottom Navigation Bar for Mobile Screens -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchView('list', this)">
+      <svg viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      Việc Làm (<span id="navCount">0</span>)
+    </button>
+    <button class="nav-item" onclick="switchView('add', this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      Thêm Job
+    </button>
+    <button class="nav-item" onclick="switchView('settings', this)">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Cài Đặt
+    </button>
+  </nav>
+
+  <!-- Job Details Modal Sheet -->
+  <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+    <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title" id="mJobTitle">Chi tiết vị trí</div>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+<script>
+  let attachedFile = null;
+  let currentFilter = 'Tất cả';
+
+  // Dữ liệu mẫu chuẩn
+  const SAMPLE_DATA = [
+    {
+      id: "job-1",
+      company_name: "VNG Corporation",
+      job_title: "Senior Frontend Engineer",
+      salary: "40 - 55 Triệu VNĐ",
+      requirements: "React, Next.js, TypeScript, Micro-frontends, >4 năm KN",
+      jd_summary: "Phát triển kiến trúc web platform quy mô lớn, tối ưu hóa Web Vitals, dẫn dắt đội ngũ kỹ sư FE.",
+      location: "TP. Hồ Chí Minh",
+      contact: "hr-tech@vng.com.vn | 028-3962-3888",
+      cv_link: "https://drive.google.com/file/d/sample1",
+      status: "Đã được mời phỏng vấn",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "job-2",
+      company_name: "FPT Software",
+      job_title: "AI Solution Architect",
+      salary: "$2,500 - $3,500",
+      requirements: "Python, LLM / RAG, LangChain, Cloud (AWS/GCP), >5 năm KN",
+      jd_summary: "Thiết kế giải pháp GenAI tích hợp cho khách hàng quốc tế, triển khai RAG pipeline và fine-tune mô hình.",
+      location: "Hà Nội / Hybrid",
+      contact: "recruitment@fsoft.com.vn | Tuyển dụng AI Dept",
+      cv_link: "https://drive.google.com/file/d/sample2",
+      status: "Đã gửi CV",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "job-3",
+      company_name: "MoMo (M-Service)",
+      job_title: "Lead Backend Engineer",
+      salary: "50 - 70 Triệu VNĐ",
+      requirements: "Golang, Java, High Throughput, Kafka, Distributed Systems",
+      jd_summary: "Xây dựng hệ thống thanh toán cốt lõi xử lý hàng triệu giao dịch/ngày, đảm bảo uptime 99.99% và bảo mật PCI-DSS.",
+      location: "TP. Hồ Chí Minh",
+      contact: "talent@mservice.com.vn | HR Hotline",
+      cv_link: "",
+      status: "Chưa gửi CV",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "job-4",
+      company_name: "Shopee Vietnam",
+      job_title: "Senior Data Engineer",
+      salary: "$2,200 - $3,000",
+      requirements: "Spark, Hadoop, Airflow, SQL tối ưu, Data Warehouse",
+      jd_summary: "Vận hành hạ tầng dữ liệu lớn cho sàn TMĐT, xây dựng pipeline ETL real-time phục vụ chiến dịch lớn.",
+      location: "TP. Hồ Chí Minh",
+      contact: "careers@shopee.vn | Tech Talent",
+      cv_link: "",
+      status: "Đã bị từ chối",
+      createdAt: new Date().toISOString()
+    },
+    {
+      id: "job-5",
+      company_name: "VinBrain",
+      job_title: "Fullstack Web/AI Engineer",
+      salary: "35 - 50 Triệu VNĐ",
+      requirements: "Node.js, React, FastAPI, Docker, tích hợp AI API",
+      jd_summary: "Phát triển giao diện & API cho ứng dụng AI y tế DrAid, xử lý dữ liệu và kết nối Gemini / OpenAI API.",
+      location: "Hà Nội / Remote",
+      contact: "contact@vinbrain.net | Phòng Nhân sự",
+      cv_link: "",
+      status: "Chưa gửi CV",
+      createdAt: new Date().toISOString()
+    }
+  ];
+
+  // Khởi chạy khi load trang
+  window.addEventListener('DOMContentLoaded', () => {
+    // 1. Nạp thiết lập API & Model
+    document.getElementById('apiKey').value = localStorage.getItem('GEMINI_API_KEY') || '';
+    document.getElementById('webhookUrl').value = localStorage.getItem('SHEETS_WEBHOOK_URL') || '';
+
+    const savedModel = localStorage.getItem('GEMINI_MODEL') || 'gemini-3.6-flash';
+    const modelSelect = document.getElementById('modelSelect');
+    if (['gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'].includes(savedModel)) {
+      modelSelect.value = savedModel;
+    } else {
+      modelSelect.value = 'custom';
+      document.getElementById('customModelGroup').style.display = 'block';
+      document.getElementById('customModelInput').value = savedModel;
+    }
+    updateModelHeader();
+
+    // 2. Nạp Jobs từ LocalStorage (nếu chưa có thì nạp dữ liệu mẫu ban đầu)
+    if (!localStorage.getItem('SAVED_JOBS')) {
+      localStorage.setItem('SAVED_JOBS', JSON.stringify(SAMPLE_DATA));
+    }
+
+    renderJobs();
+    setupEventListeners();
+  });
+
+  function setupEventListeners() {
+    document.getElementById('apiKey').addEventListener('input', (e) => localStorage.setItem('GEMINI_API_KEY', e.target.value.trim()));
+    document.getElementById('webhookUrl').addEventListener('input', (e) => localStorage.setItem('SHEETS_WEBHOOK_URL', e.target.value.trim()));
+    document.getElementById('customModelInput').addEventListener('input', (e) => {
+      localStorage.setItem('GEMINI_MODEL', e.target.value.trim());
+      updateModelHeader();
+    });
+  }
+
+  function switchView(viewName, btn) {
+    document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById(`view-${viewName}`).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (viewName === 'list') renderJobs();
+  }
+
+  function onModelChange() {
+    const select = document.getElementById('modelSelect');
+    const customGroup = document.getElementById('customModelGroup');
+    if (select.value === 'custom') {
+      customGroup.style.display = 'block';
+      const customVal = document.getElementById('customModelInput').value.trim() || 'gemini-3.8-flash';
+      document.getElementById('customModelInput').value = customVal;
+      localStorage.setItem('GEMINI_MODEL', customVal);
+    } else {
+      customGroup.style.display = 'none';
+      localStorage.setItem('GEMINI_MODEL', select.value);
+    }
+    updateModelHeader();
+  }
+
+  function getActiveModel() {
+    const selectVal = document.getElementById('modelSelect').value;
+    if (selectVal === 'custom') {
+      return document.getElementById('customModelInput').value.trim() || 'gemini-3.6-flash';
+    }
+    return selectVal;
+  }
+
+  function updateModelHeader() {
+    document.getElementById('activeModelLabel').textContent = getActiveModel();
+  }
+
+  // Quản lý Jobs
+  function getJobs() {
+    try {
+      return JSON.parse(localStorage.getItem('SAVED_JOBS')) || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveJobs(jobs) {
+    localStorage.setItem('SAVED_JOBS', JSON.stringify(jobs));
+    renderJobs();
+  }
+
+  function setFilter(status, btnElement) {
+    currentFilter = status;
+    if (btnElement) {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      btnElement.classList.add('active');
+    }
+    renderJobs();
+  }
+
+  function renderJobs() {
+    const jobs = getJobs();
+    const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+
+    // Thống kê đếm
+    const total = jobs.length;
+    const pending = jobs.filter(j => j.status === 'Chưa gửi CV').length;
+    const sent = jobs.filter(j => j.status === 'Đã gửi CV').length;
+    const interview = jobs.filter(j => j.status === 'Đã được mời phỏng vấn').length;
+
+    document.getElementById('count-all').textContent = total;
+    document.getElementById('count-pending').textContent = pending;
+    document.getElementById('count-sent').textContent = sent;
+    document.getElementById('count-interview').textContent = interview;
+    document.getElementById('navCount').textContent = total;
+
+    // Lọc theo search và chip
+    let filtered = jobs.filter(job => {
+      const matchStatus = (currentFilter === 'Tất cả') || (job.status === currentFilter);
+      const matchSearch = !query || 
+        (job.job_title || '').toLowerCase().includes(query) ||
+        (job.company_name || '').toLowerCase().includes(query) ||
+        (job.requirements || '').toLowerCase().includes(query) ||
+        (job.location || '').toLowerCase().includes(query);
+      return matchStatus && matchSearch;
+    });
+
+    const container = document.getElementById('jobsListContainer');
+    if (!filtered.length) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <h3>Chưa có vị trí tuyển dụng nào</h3>
+          <p>Dán link JD hoặc tải ảnh chụp tin tuyển dụng để Gemini phân tích và lưu trữ ngay.</p>
+          <button class="btn-submit" style="display:inline-flex; width:auto; padding:10px 20px;" onclick="switchView('add', document.querySelectorAll('.nav-item')[1])">
+            ➕ Thêm Job Ngay
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = filtered.map(job => {
+      const initial = (job.company_name || 'J').trim().charAt(0).toUpperCase();
+      const statusClass = getStatusClass(job.status);
+
+      return `
+        <div class="job-card" onclick="openModal('${job.id}')">
+          <div class="job-header">
+            <div class="company-logo">${initial}</div>
+            <div class="job-info">
+              <div class="job-title">${escapeHtml(job.job_title || 'Chưa rõ chức danh')}</div>
+              <div class="company-name">${escapeHtml(job.company_name || 'Công ty ẩn danh')}</div>
+            </div>
+          </div>
+
+          <div class="salary-badge">
+            💰 ${escapeHtml(job.salary || 'Thỏa thuận')}
+          </div>
+
+          <div class="tags-row">
+            <span class="tag">📍 ${escapeHtml(job.location || 'Toàn quốc')}</span>
+            ${job.requirements ? `<span class="tag">⚡ ${escapeHtml(job.requirements.split(',')[0] || job.requirements)}</span>` : ''}
+          </div>
+
+          <div class="jd-summary-box">
+            ${escapeHtml(job.jd_summary || 'Chưa có tóm tắt JD')}
+          </div>
+
+          <div class="job-footer" onclick="event.stopPropagation()">
+            <select class="status-select ${statusClass}" onchange="updateJobStatus('${job.id}', this.value, this)">
+              <option value="Chưa gửi CV" ${job.status === 'Chưa gửi CV' ? 'selected' : ''}>Chưa gửi CV</option>
+              <option value="Đã gửi CV" ${job.status === 'Đã gửi CV' ? 'selected' : ''}>Đã gửi CV</option>
+              <option value="Đã được mời phỏng vấn" ${job.status === 'Đã được mời phỏng vấn' ? 'selected' : ''}>Mời phỏng vấn 🎉</option>
+              <option value="Đã bị từ chối" ${job.status === 'Đã bị từ chối' ? 'selected' : ''}>Đã từ chối</option>
+            </select>
+
+            <div class="action-icons">
+              ${job.cv_link ? `<a class="icon-btn" href="${escapeHtml(job.cv_link)}" target="_blank" title="Xem CV đính kèm">📄</a>` : ''}
+              <button class="icon-btn delete" onclick="deleteJob('${job.id}')" title="Xóa">🗑️</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function getStatusClass(status) {
+    switch (status) {
+      case 'Chưa gửi CV': return 'status-chua-nop';
+      case 'Đã gửi CV': return 'status-da-nop';
+      case 'Đã được mời phỏng vấn': return 'status-phong-van';
+      case 'Đã bị từ chối': return 'status-tu-choi';
+      default: return 'status-chua-nop';
+    }
+  }
+
+  function updateJobStatus(id, newStatus, selectEl) {
+    const jobs = getJobs();
+    const target = jobs.find(j => j.id === id);
+    if (target) {
+      target.status = newStatus;
+      saveJobs(jobs);
+      if (selectEl) selectEl.className = `status-select ${getStatusClass(newStatus)}`;
+    }
+  }
+
+  function deleteJob(id) {
+    if (!confirm('Bạn có chắc chắn muốn xóa tin tuyển dụng này khỏi danh sách?')) return;
+    const jobs = getJobs().filter(j => j.id !== id);
+    saveJobs(jobs);
+  }
+
+  function loadSampleJobs() {
+    saveJobs(SAMPLE_DATA);
+    alert('Đã nạp 5 job mẫu thực tế thành công!');
+    switchView('list', document.querySelectorAll('.nav-item')[0]);
+  }
+
+  function clearAllJobs() {
+    if (!confirm('Hành động này sẽ xóa hết toàn bộ job đã lưu trong bộ nhớ máy. Tiếp tục?')) return;
+    localStorage.removeItem('SAVED_JOBS');
+    renderJobs();
+  }
+
+  // Xử lý kéo thả / Upload file
+  function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) readFile(file);
+  }
+
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]);
+  });
+
+  function readFile(file) {
+    const preview = document.getElementById('filePreview');
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      attachedFile = {
+        mimeType: file.type,
+        data: evt.target.result.split(',')[1]
+      };
+      preview.style.display = 'block';
+      preview.textContent = `📎 Đã chọn: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // Xử lý gọi Gemini & Lưu
+  async function processAndSaveJob() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const webhookUrl = document.getElementById('webhookUrl').value.trim();
+    const jdText = document.getElementById('jdText').value.trim();
+    const cvUrl = document.getElementById('cvUrl').value.trim();
+    const initialStatus = document.getElementById('initialStatus').value;
+    const model = getActiveModel();
+
+    const statusBox = document.getElementById('statusBox');
+    const btn = document.getElementById('btnAnalyze');
+
+    if (!apiKey) {
+      alert('Vui lòng nhập Gemini API Key trong tab Cài Đặt trước!');
+      switchView('settings', document.querySelectorAll('.nav-item')[2]);
+      return;
+    }
+    if (!jdText && !attachedFile) {
+      alert('Vui lòng dán văn bản JD hoặc tải ảnh chụp tin tuyển dụng!');
+      return;
+    }
+
+    try {
+      btn.disabled = true;
+      statusBox.className = 'status-box loading';
+      statusBox.textContent = `🤖 Gemini [${model}] đang phân tích và trích xuất JD...`;
+
+      const systemInstruction = `Bạn là chuyên viên tuyển dụng nhân sự xuất sắc. Hãy đọc kỹ JD tuyển dụng (văn bản hoặc hình ảnh) và trích xuất thành duy nhất một đối tượng JSON hợp lệ với cấu trúc sau:
+{
+  "company_name": "Tên công ty tuyển dụng",
+  "job_title": "Chức danh công việc",
+  "salary": "Mức lương ghi trong JD (hoặc 'Thỏa thuận')",
+  "requirements": "3-5 kỹ năng hoặc kinh nghiệm cốt lõi nhất",
+  "jd_summary": "Tóm tắt trách nhiệm chính và công việc trong 1-2 câu",
+  "location": "Địa điểm làm việc (Hà Nội, TP.HCM, Remote, Hybrid...)",
+  "contact": "Email hoặc số điện thoại HR liên hệ"
+}`;
+
+      const contentsParts = [];
+      if (jdText) contentsParts.push({ text: `NỘI DUNG BÀI ĐĂNG TUYỂN DỤNG:\n${jdText}` });
+      if (attachedFile) {
+        contentsParts.push({
+          inlineData: {
+            mimeType: attachedFile.mimeType,
+            data: attachedFile.data
+          }
+        });
+      }
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents: [{ parts: contentsParts }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.2
+          }
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || `Mã lỗi: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!rawJson) throw new Error('Không nhận được nội dung phân tích từ Gemini.');
+
+      const parsed = JSON.parse(rawJson);
+      const newJob = {
+        id: 'job-' + Date.now(),
+        company_name: parsed.company_name || 'Chưa rõ công ty',
+        job_title: parsed.job_title || 'Chưa rõ vị trí',
+        salary: parsed.salary || 'Thỏa thuận',
+        requirements: parsed.requirements || 'Theo mô tả',
+        jd_summary: parsed.jd_summary || 'Đã phân tích từ JD',
+        location: parsed.location || 'Toàn quốc',
+        contact: parsed.contact || 'Chưa có thông tin',
+        cv_link: cvUrl,
+        status: initialStatus,
+        createdAt: new Date().toISOString()
+      };
+
+      // 1. Lưu vào LocalStorage
+      const currentJobs = getJobs();
+      currentJobs.unshift(newJob);
+      saveJobs(currentJobs);
+
+      // 2. Gửi Webhook nếu có cấu hình
+      if (webhookUrl) {
+        statusBox.textContent = '🚀 Đang đồng bộ dòng mới vào Google Sheets...';
+        try {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newJob)
+          });
+        } catch (e) {
+          console.warn('Lỗi gửi Webhook:', e);
+        }
+      }
+
+      statusBox.className = 'status-box success';
+      statusBox.innerHTML = `🎉 <strong>Thành công!</strong> Đã lưu <strong>${escapeHtml(newJob.job_title)}</strong> tại <strong>${escapeHtml(newJob.company_name)}</strong>.`;
+
+      // Reset form
+      document.getElementById('jdText').value = '';
+      attachedFile = null;
+      document.getElementById('filePreview').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+
+      // Tự động chuyển qua xem tab danh sách sau 1.2s
+      setTimeout(() => {
+        switchView('list', document.querySelectorAll('.nav-item')[0]);
+      }, 1200);
+
+    } catch (err) {
+      statusBox.className = 'status-box error';
+      statusBox.textContent = `❌ Lỗi: ${err.message}`;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Modal Chi Tiết
+  function openModal(id) {
+    const job = getJobs().find(j => j.id === id);
+    if (!job) return;
+
+    document.getElementById('mJobTitle').textContent = job.job_title || 'Chi tiết công việc';
+    document.getElementById('modalBody').innerHTML = `
+      <div class="modal-row">
+        <strong>Doanh nghiệp tuyển dụng</strong>
+        <div style="font-size:1rem; font-weight:600; color:var(--secondary);">${escapeHtml(job.company_name)}</div>
+      </div>
+      <div class="modal-row">
+        <strong>Mức lương & Đãi ngộ</strong>
+        <div class="salary-badge">💰 ${escapeHtml(job.salary || 'Thỏa thuận')}</div>
+      </div>
+      <div class="modal-row">
+        <strong>Địa điểm làm việc</strong>
+        <div>📍 ${escapeHtml(job.location || 'Chưa cập nhật')}</div>
+      </div>
+      <div class="modal-row">
+        <strong>Yêu cầu kỹ năng cốt lõi</strong>
+        <div style="background:#f8fafc; padding:8px 10px; border-radius:8px; border:1px solid var(--border);">${escapeHtml(job.requirements || 'Không có')}</div>
+      </div>
+      <div class="modal-row">
+        <strong>Tóm tắt công việc (Gemini AI trích xuất)</strong>
+        <div class="jd-summary-box">${escapeHtml(job.jd_summary || 'Không có')}</div>
+      </div>
+      <div class="modal-row">
+        <strong>Thông tin liên hệ HR</strong>
+        <div>📞 ${escapeHtml(job.contact || 'Chưa cập nhật')}</div>
+      </div>
+      ${job.cv_link ? `
+      <div class="modal-row">
+        <strong>CV Đã Nộp</strong>
+        <a href="${escapeHtml(job.cv_link)}" target="_blank" style="color:var(--primary); font-weight:600; text-decoration:none;">🔗 Mở file CV đã lưu</a>
+      </div>` : ''}
+    `;
+    document.getElementById('detailModal').style.display = 'flex';
+  }
+
+  function closeModal(e) {
+    if (!e || e.target.id === 'detailModal' || e.target.classList.contains('close-btn')) {
+      document.getElementById('detailModal').style.display = 'none';
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+</script>
+
+</body>
+</html>
