@@ -24,7 +24,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-    /* ================= HEADER & NAVIGATION ================= */
+    /* HEADER */
     header.app-header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
@@ -52,6 +52,26 @@
     }
     .brand svg { color: var(--primary); }
     .brand span { color: var(--primary); }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+
+    .btn-sync {
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-sync:hover { background: var(--primary-light); color: var(--primary); border-color: #bbf7d0; }
+    .btn-sync.spinning svg { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     .desktop-nav { display: none; align-items: center; gap: 8px; }
     .nav-btn {
@@ -81,6 +101,7 @@
       border: 1px solid #bbf7d0;
     }
 
+    /* MOBILE BOTTOM NAV */
     nav.bottom-nav {
       display: flex;
       position: fixed;
@@ -110,7 +131,7 @@
     .mobile-nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
     .mobile-nav-item.active { color: var(--primary); }
 
-    /* ================= MAIN CONTAINER ================= */
+    /* MAIN CONTAINER */
     .container {
       max-width: 1140px;
       width: 100%;
@@ -122,7 +143,7 @@
     .view-section.active { display: block; animation: fadeIn 0.2s ease-in-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ================= STATS CARDS ================= */
+    /* STATS PILLS */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -144,7 +165,7 @@
     .stat-pill .num { font-size: 1.35rem; font-weight: 800; color: var(--secondary); display: block; }
     .stat-pill .lbl { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-top: 2px; display: block; }
 
-    /* ================= FILTER & SEARCH ================= */
+    /* FILTER & SEARCH */
     .filter-wrapper {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -200,7 +221,7 @@
     .chip:hover { background: #e2e8f0; }
     .chip.active { background: var(--primary); color: white; }
 
-    /* ================= JOBS GRID ================= */
+    /* JOBS GRID */
     .jobs-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -305,14 +326,13 @@
       border-top: 1px dashed var(--border);
       gap: 8px;
     }
-    .status-badge-select {
+    .status-badge {
       font-size: 0.78rem;
       font-weight: 600;
       padding: 6px 12px;
       border-radius: 20px;
       border: 1px solid transparent;
-      outline: none;
-      cursor: pointer;
+      display: inline-block;
     }
     .st-chua-gui { background: #f1f5f9; color: #475569; border-color: #cbd5e1; }
     .st-da-gui { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
@@ -339,9 +359,8 @@
     }
     .btn-action:hover { background: #f1f5f9; color: var(--secondary); }
     .btn-action.primary { color: #0284c7; background: #f0f9ff; border-color: #bae6fd; }
-    .btn-action.delete:hover { color: #ef4444; border-color: #fecaca; background: #fff1f2; }
 
-    /* ================= FORMS & UPLOAD ZONE ================= */
+    /* FORMS */
     .panel-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -375,7 +394,6 @@
     input:focus, select:focus, textarea:focus { border-color: var(--primary); }
     textarea { resize: vertical; min-height: 120px; line-height: 1.45; }
 
-    /* Drop Zone / Upload Button Box */
     .upload-box {
       border: 2px dashed #cbd5e1;
       border-radius: 10px;
@@ -389,22 +407,7 @@
       align-items: center;
       gap: 6px;
     }
-    .upload-box:hover, .upload-box.dragover {
-      border-color: var(--primary);
-      background: var(--primary-light);
-    }
-    .upload-box-icon {
-      font-size: 1.8rem;
-    }
-    .upload-box-title {
-      font-size: 0.9rem;
-      font-weight: 700;
-      color: var(--secondary);
-    }
-    .upload-box-sub {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-    }
+    .upload-box:hover, .upload-box.dragover { border-color: var(--primary); background: var(--primary-light); }
     .btn-choose-file {
       display: inline-flex;
       align-items: center;
@@ -417,10 +420,8 @@
       font-weight: 600;
       color: var(--secondary);
       margin-top: 4px;
-      box-shadow: var(--shadow-sm);
     }
 
-    /* Preview Card sau khi có ảnh */
     .screenshot-preview {
       display: none;
       margin-top: 10px;
@@ -495,7 +496,7 @@
     .status-box.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; display: block; }
     .status-box.error { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; display: block; }
 
-    /* ================= MODAL ================= */
+    /* MODAL */
     .modal-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -532,7 +533,7 @@
     .empty-state { text-align: center; padding: 48px 16px; color: var(--text-muted); }
     .empty-state svg { width: 56px; height: 56px; stroke: #cbd5e1; margin-bottom: 12px; }
 
-    /* ================= RESPONSIVE ================= */
+    /* RESPONSIVE */
     @media (max-width: 767px) {
       body { padding-bottom: 74px; }
     }
@@ -545,15 +546,11 @@
       .jobs-grid { grid-template-columns: repeat(2, 1fr); }
       .container { padding: 24px 16px; }
     }
-
-    @media (min-width: 1200px) {
-      .jobs-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; }
-    }
   </style>
 </head>
 <body>
 
-  <!-- Top Navigation Bar -->
+  <!-- HEADER -->
   <header class="app-header">
     <div class="header-inner">
       <div class="brand" onclick="switchView('list')">
@@ -561,10 +558,10 @@
         JobRadar<span>.AI</span>
       </div>
 
-      <!-- Desktop Tabs -->
+      <!-- DESKTOP MENU -->
       <nav class="desktop-nav">
         <button class="nav-btn active" id="d-nav-list" onclick="switchView('list')">
-          📋 Việc Làm Đã Lưu (<span class="badge-count">0</span>)
+          📋 Việc Làm (<span class="badge-count">0</span>)
         </button>
         <button class="nav-btn" id="d-nav-add" onclick="switchView('add')">
           ➕ Thêm Job Mới
@@ -574,7 +571,13 @@
         </button>
       </nav>
 
-      <div class="header-badge" id="activeModelBadge">gemini-3.6-flash</div>
+      <div class="header-right">
+        <button class="btn-sync" id="btnSync" onclick="fetchJobsFromSheet(true)" title="Tải dữ liệu mới nhất từ Google Sheets">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>Đồng bộ Sheet</span>
+        </button>
+        <div class="header-badge" id="activeModelBadge">gemini-3.6-flash</div>
+      </div>
     </div>
   </header>
 
@@ -629,18 +632,16 @@
           Thêm & Phân Tích Tin Tuyển Dụng Mới
         </div>
 
-        <!-- Khối Upload Ảnh & Dán Ctrl+V (Hoàn hảo cho cả Mobile & PC) -->
         <div class="form-group">
-          <label>Hình ảnh tin tuyển dụng (Chụp màn hình hoặc file ảnh JD):</label>
+          <label>Hình ảnh tin tuyển dụng (Chụp màn hình hoặc file ảnh):</label>
           <div class="upload-box" id="uploadDropBox" onclick="document.getElementById('imgFileInput').click()">
-            <div class="upload-box-icon">📸</div>
-            <div class="upload-box-title">Tải lên hoặc Chụp ảnh màn hình JD</div>
-            <div class="upload-box-sub">Dành cho điện thoại (bấm chọn) hoặc máy tính (kéo thả)</div>
-            <span class="btn-choose-file">📁 Bấm để chọn ảnh từ máy</span>
+            <div style="font-size: 1.8rem;">📸</div>
+            <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">Tải lên hoặc Chụp ảnh màn hình JD</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Bấm để chọn file từ máy hoặc chụp từ điện thoại</div>
+            <span class="btn-choose-file">📁 Chọn ảnh từ máy</span>
             <input type="file" id="imgFileInput" accept="image/*" style="display:none;" onchange="handleImageFileSelect(event)" />
           </div>
 
-          <!-- Xem trước ảnh đã chọn/dán -->
           <div class="screenshot-preview" id="screenshotPreview">
             <div style="display:flex; align-items:center; gap:10px; min-width:0;">
               <img id="screenThumb" class="screenshot-thumb" src="" alt="Screenshot" />
@@ -654,14 +655,14 @@
         </div>
 
         <div class="form-group">
-          <label for="jobUrl">🔗 Đường link bài đăng tuyển dụng gốc (TopCV, LinkedIn, Facebook...):</label>
-          <input type="text" id="jobUrl" placeholder="https://topcv.vn/viec-lam/... hoặc https://linkedin.com/jobs/..." />
+          <label for="jobUrl">🔗 Đường link bài đăng gốc (TopCV, LinkedIn, Facebook...):</label>
+          <input type="text" id="jobUrl" placeholder="https://topcv.vn/viec-lam/... hoặc https://facebook.com/..." />
         </div>
 
         <div class="form-group">
           <label for="jdText">
             Nội dung văn bản JD (Nếu có):
-            <span class="paste-badge">💡 Mẹo PC: Bấm Ctrl+V bất cứ lúc nào để dán nhanh ảnh màn hình</span>
+            <span class="paste-badge">💡 Mẹo PC: Nhấn Ctrl+V bất cứ lúc nào để dán ảnh màn hình</span>
           </label>
           <textarea id="jdText" placeholder="Copy bài đăng tuyển dụng dán vào đây (hoặc chỉ cần tải ảnh chụp màn hình phía trên)"></textarea>
         </div>
@@ -682,7 +683,7 @@
         </div>
 
         <button type="button" class="btn-main" id="btnAnalyze" onclick="processAndSaveJob()">
-          ✨ Phân Tích Bằng Gemini & Lưu Vào Sheet
+          ✨ Phân Tích Bằng Gemini & Ghi Vào Google Sheet
         </button>
 
         <div class="status-box" id="statusBox"></div>
@@ -716,37 +717,34 @@
         </div>
 
         <div class="form-group">
-          <label for="webhookUrl">Google Apps Script Webhook URL:</label>
+          <label for="webhookUrl">Google Apps Script Webhook URL (Dùng chung cho cả PC & Mobile):</label>
           <input type="text" id="webhookUrl" placeholder="https://script.google.com/macros/s/.../exec" />
-          <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">Điền URL Web App Google Apps Script để đẩy dữ liệu tự động vào Bảng tính.</small>
+          <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">
+            ⚠️ URL này dùng để cả PC và Mobile đồng bộ dữ liệu trực tiếp từ Bảng tính.
+          </small>
         </div>
 
         <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
 
         <div class="form-group">
-          <label>Quản lý dữ liệu trên máy:</label>
-          <div class="grid-2">
-            <button type="button" class="btn-main" style="background: #0284c7;" onclick="loadSampleJobs()">
-              📥 Nạp Lại Dữ Liệu Mẫu
-            </button>
-            <button type="button" class="btn-main" style="background: #ef4444;" onclick="clearAllJobs()">
-              🗑️ Xóa Toàn Bộ Dữ Liệu
-            </button>
-          </div>
+          <label>Thao tác dữ liệu:</label>
+          <button type="button" class="btn-main" style="background: #0284c7;" onclick="fetchJobsFromSheet(true)">
+            🔄 Tải Lại Dữ Liệu Ngay Từ Google Sheets
+          </button>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- Mobile Bottom Navigation (Chỉ hiển thị trên điện thoại) -->
+  <!-- MOBILE BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="mobile-nav-item active" id="m-nav-list" onclick="switchView('list')">
       <svg viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
       Việc Làm
     </button>
     <button class="mobile-nav-item" id="m-nav-add" onclick="switchView('add')">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="12" y2="12"/></svg>
       Thêm Job
     </button>
     <button class="mobile-nav-item" id="m-nav-settings" onclick="switchView('settings')">
@@ -755,7 +753,7 @@
     </button>
   </nav>
 
-  <!-- Modal Chi Tiết Job -->
+  <!-- MODAL CHI TIẾT -->
   <div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
     <div class="modal-dialog" onclick="event.stopPropagation()">
       <div class="modal-header">
@@ -769,55 +767,10 @@
 <script>
   let activeImageBase64 = null;
   let currentFilter = 'Tất cả';
-
-  // Dữ liệu mẫu ban đầu
-  const SAMPLE_DATA = [
-    {
-      id: "job-1",
-      company_name: "Công ty Cổ phần Đầu tư và Tiếp vận Mê Kông",
-      job_title: "Nhân viên IT Helpdesk",
-      salary: "10 - 12 triệu VNĐ (Thỏa thuận)",
-      working_time: "Thứ 2 - Thứ 6 (8h00 - 17h30), Thứ 7 (8h00 - 12h00)",
-      requirements: "Tối thiểu 06 tháng kinh nghiệm IT Helpdesk; Tinh thần học hỏi, chủ động, có trách nhiệm; Ưu tiên có kinh nghiệm thi công, bảo trì hệ thống CNTT.",
-      jd_summary: "Quản lý, vận hành hệ thống mạng LAN, camera và hỗ trợ người dùng xử lý sự cố phần mềm, máy tính, thiết bị văn phòng. Đảm bảo toàn bộ hệ thống CNTT hoạt động ổn định.",
-      location: "232–234 Huỳnh Tấn Phát, Phường Tân Thuận, TP. Hồ Chí Minh",
-      contact: "Email: longlt@mekongcorp.com.vn - SĐT: 0938 755 339 (Ms. Liên)",
-      original_jd_link: "https://mekongcorp.com.vn/tuyen-dung",
-      cv_link: "",
-      status: "Chưa gửi CV"
-    },
-    {
-      id: "job-2",
-      company_name: "EMPOWER SC",
-      job_title: "Thực tập sinh IT",
-      salary: "2.500.000đ/tháng + phụ cấp cơm trưa 25.000đ/ngày làm việc",
-      working_time: "Part-time linh hoạt (Tối thiểu 24h/tuần theo lịch học)",
-      requirements: "Sinh viên năm 4 hoặc vừa tốt nghiệp; Ham học hỏi, nắm bắt công việc nhanh; Có thể làm full-time (không bắt buộc); Kỹ năng giao tiếp và làm việc nhóm tốt.",
-      jd_summary: "Tham gia kiểm thử phần mềm, hỗ trợ khách hàng sử dụng phần mềm và lắp đặt phần cứng, đồng thời hỗ trợ các phòng ban theo sự hướng dẫn.",
-      location: "72/7 Trần Quốc Toản, Phường Xuân Hòa, Quận 3, TP.HCM",
-      contact: "hr@empowersc.com.vn - 0346796671",
-      original_jd_link: "https://empowersc.com.vn/careers",
-      cv_link: "",
-      status: "Chưa gửi CV"
-    },
-    {
-      id: "job-3",
-      company_name: "Máy Tính 365PC",
-      job_title: "Nhân viên Sale Showroom PC",
-      salary: "25 - 50 triệu/tháng",
-      working_time: "Xoay ca linh hoạt (Ca 1: 8h30 - 17h30, Ca 2: 13h00 - 21h30)",
-      requirements: "Đam mê kinh doanh, yêu thích công nghệ và PC Gaming; Giao tiếp tốt, tư vấn tự nhiên; Tinh thần học hỏi, có trách nhiệm; Ưu tiên có kinh nghiệm sale máy tính/linh kiện.",
-      jd_summary: "Tư vấn cấu hình và chốt đơn bán lẻ PC Gaming, linh kiện máy tính dựa trên data có sẵn tại showroom, đồng thời hỗ trợ chăm sóc khách hàng.",
-      location: "Showroom Máy Tính 365PC",
-      contact: "0363 428 255 (Mr. Tuấn)",
-      original_jd_link: "https://maytinh365.vn/tuyen-dung",
-      cv_link: "",
-      status: "Chưa gửi CV"
-    }
-  ];
+  let cachedJobs = [];
 
   window.addEventListener('DOMContentLoaded', () => {
-    // 1. Nạp Cài Đặt từ LocalStorage
+    // Nạp Cài Đặt
     document.getElementById('apiKey').value = localStorage.getItem('GEMINI_API_KEY') || '';
     document.getElementById('webhookUrl').value = localStorage.getItem('SHEETS_WEBHOOK_URL') || '';
 
@@ -832,12 +785,15 @@
     }
     updateModelBadge();
 
-    // 2. Nạp Danh Sách Jobs
-    if (!localStorage.getItem('SAVED_JOBS')) {
-      localStorage.setItem('SAVED_JOBS', JSON.stringify(SAMPLE_DATA));
-    }
-
+    // Nạp cache trước để hiển thị ngay khi mở trang
+    try {
+      cachedJobs = JSON.parse(localStorage.getItem('SAVED_JOBS')) || [];
+    } catch { cachedJobs = []; }
     renderJobs();
+
+    // Tự động fetch mới nhất từ Google Sheets khi mở trang/reload
+    fetchJobsFromSheet(false);
+
     bindEvents();
     setupPasteListener();
     setupDragDropListener();
@@ -845,14 +801,46 @@
 
   function bindEvents() {
     document.getElementById('apiKey').addEventListener('input', (e) => localStorage.setItem('GEMINI_API_KEY', e.target.value.trim()));
-    document.getElementById('webhookUrl').addEventListener('input', (e) => localStorage.setItem('SHEETS_WEBHOOK_URL', e.target.value.trim()));
+    document.getElementById('webhookUrl').addEventListener('input', (e) => {
+      localStorage.setItem('SHEETS_WEBHOOK_URL', e.target.value.trim());
+    });
     document.getElementById('customModelInput').addEventListener('input', (e) => {
       localStorage.setItem('GEMINI_MODEL', e.target.value.trim());
       updateModelBadge();
     });
   }
 
-  /* ================= XỬ LÝ ẢNH (BẤM CHỌN FILE TỪ ĐIỆN THOẠI HOẶC KÉO THẢ) ================= */
+  /* ================= FETCH DỮ LIỆU TỪ GOOGLE SHEETS ================= */
+  async function fetchJobsFromSheet(showFeedback = false) {
+    const webhookUrl = localStorage.getItem('SHEETS_WEBHOOK_URL') || document.getElementById('webhookUrl').value.trim();
+    if (!webhookUrl) {
+      if (showFeedback) alert('Vui lòng nhập Webhook URL trong tab Cài Đặt trước!');
+      return;
+    }
+
+    const btnSync = document.getElementById('btnSync');
+    btnSync.classList.add('spinning');
+
+    try {
+      const res = await fetch(webhookUrl, { method: 'GET' });
+      if (!res.ok) throw new Error(`Lỗi kết nối HTTP: ${res.status}`);
+      
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        cachedJobs = data;
+        localStorage.setItem('SAVED_JOBS', JSON.stringify(cachedJobs));
+        renderJobs();
+        if (showFeedback) alert(`Đã đồng bộ ${data.length} vị trí mới nhất từ Google Sheets!`);
+      }
+    } catch (err) {
+      console.warn('Lỗi khi fetch từ Sheet:', err);
+      if (showFeedback) alert('Không thể kết nối đến Google Sheets. Hãy kiểm tra lại URL Webhook!');
+    } finally {
+      btnSync.classList.remove('spinning');
+    }
+  }
+
+  /* ================= XỬ LÝ ẢNH & PASTE ================= */
   function handleImageFileSelect(e) {
     const file = e.target.files[0];
     if (file) loadFileAsImage(file);
@@ -871,7 +859,6 @@
     });
   }
 
-  /* ================= TỰ ĐỘNG BẮT SỰ KIỆN CTRL+V (DÁN ẢNH CHỤP MÀN HÌNH) ================= */
   function setupPasteListener() {
     window.addEventListener('paste', (e) => {
       const items = (e.clipboardData || window.clipboardData)?.items;
@@ -962,19 +949,6 @@
     document.getElementById('activeModelBadge').textContent = getActiveModel();
   }
 
-  function getJobs() {
-    try {
-      return JSON.parse(localStorage.getItem('SAVED_JOBS')) || [];
-    } catch {
-      return [];
-    }
-  }
-
-  function saveJobs(jobs) {
-    localStorage.setItem('SAVED_JOBS', JSON.stringify(jobs));
-    renderJobs();
-  }
-
   function setFilter(status, btn) {
     currentFilter = status;
     if (btn) {
@@ -985,7 +959,7 @@
   }
 
   function renderJobs() {
-    const jobs = getJobs();
+    const jobs = cachedJobs || [];
     const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
 
     const total = jobs.length;
@@ -1014,8 +988,8 @@
       container.innerHTML = `
         <div class="empty-state" style="grid-column: 1 / -1;">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          <h3>Không tìm thấy công việc nào</h3>
-          <p>Hãy thử từ khóa khác hoặc bấm nút "Thêm Job Mới" để thêm vị trí.</p>
+          <h3>Không có vị trí nào</h3>
+          <p>Bấm nút "Đồng bộ Sheet" hoặc thêm việc làm mới qua Gemini AI.</p>
         </div>
       `;
       return;
@@ -1053,17 +1027,11 @@
           </div>
 
           <div class="job-footer" onclick="event.stopPropagation()">
-            <select class="status-badge-select ${statusCls}" onchange="updateStatus('${job.id}', this.value, this)">
-              <option value="Chưa gửi CV" ${job.status === 'Chưa gửi CV' ? 'selected' : ''}>Chưa gửi CV</option>
-              <option value="Đã gửi CV" ${job.status === 'Đã gửi CV' ? 'selected' : ''}>Đã gửi CV</option>
-              <option value="Đã được mời phỏng vấn" ${job.status === 'Đã được mời phỏng vấn' ? 'selected' : ''}>Mời phỏng vấn 🎉</option>
-              <option value="Đã bị từ chối" ${job.status === 'Đã bị từ chối' ? 'selected' : ''}>Đã từ chối</option>
-            </select>
+            <span class="status-badge ${statusCls}">${escapeHtml(job.status || 'Chưa gửi CV')}</span>
 
             <div class="action-group">
-              ${hasLink ? `<a class="btn-action primary" href="${escapeHtml(job.original_jd_link)}" target="_blank" title="Mở trang tin tuyển dụng gốc">🔗 Tin gốc</a>` : ''}
+              ${hasLink ? `<a class="btn-action primary" href="${escapeHtml(job.original_jd_link)}" target="_blank" title="Mở tin tuyển dụng gốc">🔗 Tin gốc</a>` : ''}
               ${job.cv_link ? `<a class="btn-action" href="${escapeHtml(job.cv_link)}" target="_blank" title="Xem CV đã gửi">📄 CV</a>` : ''}
-              <button class="btn-action delete" onclick="deleteJob('${job.id}')" title="Xóa">🗑️</button>
             </div>
           </div>
         </div>
@@ -1081,34 +1049,7 @@
     }
   }
 
-  function updateStatus(id, newStatus, el) {
-    const jobs = getJobs();
-    const target = jobs.find(j => j.id === id);
-    if (target) {
-      target.status = newStatus;
-      saveJobs(jobs);
-      if (el) el.className = `status-badge-select ${getStatusClass(newStatus)}`;
-    }
-  }
-
-  function deleteJob(id) {
-    if (!confirm('Xác nhận xóa vị trí tuyển dụng này khỏi danh sách?')) return;
-    saveJobs(getJobs().filter(j => j.id !== id));
-  }
-
-  function loadSampleJobs() {
-    saveJobs(SAMPLE_DATA);
-    alert('Đã khôi phục các công việc mẫu thành công!');
-    switchView('list');
-  }
-
-  function clearAllJobs() {
-    if (!confirm('Hành động này sẽ xóa sạch danh sách việc làm đã lưu. Bạn chắc chứ?')) return;
-    localStorage.removeItem('SAVED_JOBS');
-    renderJobs();
-  }
-
-  /* ================= PHÂN TÍCH BẰNG GEMINI & LƯU SHEET ================= */
+  /* ================= PHÂN TÍCH GEMINI & GHI VÀO SHEET ================= */
   async function processAndSaveJob() {
     const apiKey = document.getElementById('apiKey').value.trim();
     const webhookUrl = document.getElementById('webhookUrl').value.trim();
@@ -1126,6 +1067,11 @@
       switchView('settings');
       return;
     }
+    if (!webhookUrl) {
+      alert('Vui lòng nhập Webhook URL trong tab Cài Đặt để kết nối Google Sheets!');
+      switchView('settings');
+      return;
+    }
     if (!jdText && !activeImageBase64 && !jobUrl) {
       alert('Vui lòng chọn ảnh chụp JD, dán link hoặc nhập văn bản tin tuyển dụng!');
       return;
@@ -1134,7 +1080,7 @@
     try {
       btn.disabled = true;
       statusBox.className = 'status-box loading';
-      statusBox.textContent = `🤖 Gemini [${model}] đang đọc và phân tích tin tuyển dụng...`;
+      statusBox.textContent = `🤖 Gemini [${model}] đang phân tích tin tuyển dụng...`;
 
       const promptSystem = `Bạn là chuyên gia nhân sự chuyên nghiệp. Hãy đọc kỹ tin tuyển dụng (từ văn bản hoặc ảnh chụp màn hình đính kèm) và trích xuất thành DUY NHẤT một chuỗi JSON hợp lệ với đúng cấu trúc sau:
 {
@@ -1184,8 +1130,7 @@
 
       const parsed = JSON.parse(rawJson);
 
-      const newJob = {
-        id: 'job-' + Date.now(),
+      const payload = {
         company_name: parsed.company_name || 'Chưa rõ công ty',
         job_title: parsed.job_title || 'Chưa rõ vị trí',
         salary: parsed.salary || 'Thỏa thuận',
@@ -1199,47 +1144,28 @@
         status: initialStatus
       };
 
-      // 1. Lưu vào LocalStorage
-      const currentJobs = getJobs();
-      currentJobs.unshift(newJob);
-      saveJobs(currentJobs);
-
-      // 2. Gửi Webhook sang Google Sheets (Nếu đã cấu hình Webhook URL)
-      if (webhookUrl) {
-        statusBox.textContent = '🚀 Đang lưu dòng mới vào Google Sheets...';
-        try {
-          await fetch(webhookUrl, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              company_name: newJob.company_name,
-              job_title: newJob.job_title,
-              salary: newJob.salary,
-              working_time: newJob.working_time,
-              requirements: newJob.requirements,
-              jd_summary: newJob.jd_summary,
-              location: newJob.location,
-              contact: newJob.contact,
-              original_jd_link: newJob.original_jd_link,
-              cv_link: newJob.cv_link,
-              status: newJob.status
-            })
-          });
-        } catch (e) {
-          console.warn('Lỗi gửi Webhook:', e);
-        }
-      }
+      // Ghi dữ liệu vào Google Sheets qua POST
+      statusBox.textContent = '🚀 Đang lưu dòng mới vào Google Sheets...';
+      await fetch(webhookUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
       statusBox.className = 'status-box success';
-      statusBox.innerHTML = `🎉 <strong>Thành công!</strong> Đã thêm <strong>${escapeHtml(newJob.job_title)}</strong> tại <strong>${escapeHtml(newJob.company_name)}</strong>.`;
+      statusBox.innerHTML = `🎉 <strong>Thành công!</strong> Đã thêm <strong>${escapeHtml(payload.job_title)}</strong> vào Google Sheets.`;
 
       // Reset form
       document.getElementById('jobUrl').value = '';
       document.getElementById('jdText').value = '';
       removeScreenshot();
 
-      setTimeout(() => switchView('list'), 1200);
+      // Đợi 1.5 giây để Sheet ghi xong, sau đó tự fetch lại dữ liệu từ Sheet
+      setTimeout(async () => {
+        await fetchJobsFromSheet(false);
+        switchView('list');
+      }, 1500);
 
     } catch (err) {
       statusBox.className = 'status-box error';
@@ -1251,7 +1177,7 @@
 
   /* ================= MODAL XEM CHI TIẾT ================= */
   function openModal(id) {
-    const job = getJobs().find(j => j.id === id);
+    const job = cachedJobs.find(j => j.id === id);
     if (!job) return;
 
     document.getElementById('mJobTitle').textContent = job.job_title || 'Chi tiết vị trí';
@@ -1261,7 +1187,7 @@
         <div style="font-size:1.05rem; font-weight:700; color:var(--secondary);">${escapeHtml(job.company_name)}</div>
       </div>
       <div class="modal-field">
-        <strong>Mức lương & Đãi ngộ</strong>
+        <strong>Mức đãi ngộ</strong>
         <div class="salary-tag">💰 ${escapeHtml(job.salary || 'Thỏa thuận')}</div>
       </div>
       <div class="modal-field">
@@ -1271,6 +1197,10 @@
       <div class="modal-field">
         <strong>Địa điểm</strong>
         <div>📍 ${escapeHtml(job.location || 'Toàn quốc')}</div>
+      </div>
+      <div class="modal-field">
+        <strong>Trạng thái ứng tuyển</strong>
+        <div><span class="status-badge ${getStatusClass(job.status)}">${escapeHtml(job.status || 'Chưa gửi CV')}</span></div>
       </div>
       <div class="modal-field">
         <strong>Yêu cầu cốt lõi</strong>
@@ -1288,7 +1218,7 @@
       <div class="modal-field">
         <strong>Tin tuyển dụng gốc</strong>
         <a href="${escapeHtml(job.original_jd_link)}" target="_blank" style="color:var(--primary); font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
-          🔗 Mở tin tuyển dụng gốc (TopCV / LinkedIn / Web) ↗
+          🔗 Mở bài đăng tuyển dụng gốc ↗
         </a>
       </div>` : ''}
       ${job.cv_link ? `
