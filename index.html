@@ -110,7 +110,7 @@
     .mobile-nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
     .mobile-nav-item.active { color: var(--primary); }
 
-    /* ================= MAIN LAYOUT ================= */
+    /* ================= MAIN CONTAINER ================= */
     .container {
       max-width: 1140px;
       width: 100%;
@@ -200,7 +200,7 @@
     .chip:hover { background: #e2e8f0; }
     .chip.active { background: var(--primary); color: white; }
 
-    /* ================= JOB CARDS GRID ================= */
+    /* ================= JOBS GRID ================= */
     .jobs-grid {
       display: grid;
       grid-template-columns: 1fr;
@@ -341,7 +341,7 @@
     .btn-action.primary { color: #0284c7; background: #f0f9ff; border-color: #bae6fd; }
     .btn-action.delete:hover { color: #ef4444; border-color: #fecaca; background: #fff1f2; }
 
-    /* ================= FORM STYLING ================= */
+    /* ================= FORMS & UPLOAD ZONE ================= */
     .panel-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -373,7 +373,81 @@
       transition: border-color 0.2s;
     }
     input:focus, select:focus, textarea:focus { border-color: var(--primary); }
-    textarea { resize: vertical; min-height: 130px; line-height: 1.45; }
+    textarea { resize: vertical; min-height: 120px; line-height: 1.45; }
+
+    /* Drop Zone / Upload Button Box */
+    .upload-box {
+      border: 2px dashed #cbd5e1;
+      border-radius: 10px;
+      padding: 16px 14px;
+      text-align: center;
+      background: #fafafa;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .upload-box:hover, .upload-box.dragover {
+      border-color: var(--primary);
+      background: var(--primary-light);
+    }
+    .upload-box-icon {
+      font-size: 1.8rem;
+    }
+    .upload-box-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+    .upload-box-sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .btn-choose-file {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--secondary);
+      margin-top: 4px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Preview Card sau khi có ảnh */
+    .screenshot-preview {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .screenshot-thumb {
+      max-width: 64px;
+      max-height: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      border: 1px solid #86efac;
+    }
+    .btn-remove-img {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      font-weight: bold;
+    }
 
     .paste-badge {
       display: inline-flex;
@@ -386,25 +460,6 @@
       border-radius: 4px;
       font-weight: 600;
       margin-top: 4px;
-    }
-
-    .screenshot-preview {
-      display: none;
-      margin-top: 10px;
-      padding: 10px 14px;
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: 8px;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .screenshot-thumb {
-      max-width: 60px;
-      max-height: 45px;
-      border-radius: 6px;
-      object-fit: cover;
-      border: 1px solid #bbf7d0;
     }
 
     .grid-2 { display: grid; grid-template-columns: 1fr; gap: 12px; }
@@ -574,25 +629,41 @@
           Thêm & Phân Tích Tin Tuyển Dụng Mới
         </div>
 
+        <!-- Khối Upload Ảnh & Dán Ctrl+V (Hoàn hảo cho cả Mobile & PC) -->
         <div class="form-group">
-          <label for="jobUrl">🔗 Đường link tin tuyển dụng gốc (TopCV, LinkedIn, Facebook, Web công ty):</label>
-          <input type="text" id="jobUrl" placeholder="https://www.topcv.vn/viec-lam/... hoặc https://linkedin.com/jobs/..." />
+          <label>Hình ảnh tin tuyển dụng (Chụp màn hình hoặc file ảnh JD):</label>
+          <div class="upload-box" id="uploadDropBox" onclick="document.getElementById('imgFileInput').click()">
+            <div class="upload-box-icon">📸</div>
+            <div class="upload-box-title">Tải lên hoặc Chụp ảnh màn hình JD</div>
+            <div class="upload-box-sub">Dành cho điện thoại (bấm chọn) hoặc máy tính (kéo thả)</div>
+            <span class="btn-choose-file">📁 Bấm để chọn ảnh từ máy</span>
+            <input type="file" id="imgFileInput" accept="image/*" style="display:none;" onchange="handleImageFileSelect(event)" />
+          </div>
+
+          <!-- Xem trước ảnh đã chọn/dán -->
+          <div class="screenshot-preview" id="screenshotPreview">
+            <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+              <img id="screenThumb" class="screenshot-thumb" src="" alt="Screenshot" />
+              <div>
+                <div style="font-size:0.85rem; font-weight:700; color:#047857;" id="screenLabel">Đã chọn 1 ảnh tin tuyển dụng</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">Sẵn sàng để Gemini đọc</div>
+              </div>
+            </div>
+            <button type="button" class="btn-remove-img" onclick="removeScreenshot()" title="Hủy ảnh này">&times;</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="jobUrl">🔗 Đường link bài đăng tuyển dụng gốc (TopCV, LinkedIn, Facebook...):</label>
+          <input type="text" id="jobUrl" placeholder="https://topcv.vn/viec-lam/... hoặc https://linkedin.com/jobs/..." />
         </div>
 
         <div class="form-group">
           <label for="jdText">
-            Nội dung tin tuyển dụng (JD):
-            <span class="paste-badge">💡 Mẹo: Bấm Ctrl+V bất kỳ đâu để dán ảnh chụp màn hình JD</span>
+            Nội dung văn bản JD (Nếu có):
+            <span class="paste-badge">💡 Mẹo PC: Bấm Ctrl+V bất cứ lúc nào để dán nhanh ảnh màn hình</span>
           </label>
-          <textarea id="jdText" placeholder="Copy bài đăng tuyển dụng dán vào đây (hoặc chỉ cần nhấn Ctrl+V chụp ảnh màn hình)"></textarea>
-
-          <div class="screenshot-preview" id="screenshotPreview">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <img id="screenThumb" class="screenshot-thumb" src="" alt="Screenshot" />
-              <span style="font-size:0.85rem; font-weight:600; color:#047857;" id="screenLabel">Đã nhận 1 ảnh chụp màn hình</span>
-            </div>
-            <button type="button" onclick="removeScreenshot()" style="background:none; border:none; color:#ef4444; font-size:1.2rem; cursor:pointer;">&times;</button>
-          </div>
+          <textarea id="jdText" placeholder="Copy bài đăng tuyển dụng dán vào đây (hoặc chỉ cần tải ảnh chụp màn hình phía trên)"></textarea>
         </div>
 
         <div class="grid-2">
@@ -696,10 +767,10 @@
   </div>
 
 <script>
-  let pastedImageBase64 = null;
+  let activeImageBase64 = null;
   let currentFilter = 'Tất cả';
 
-  // Dữ liệu mẫu đồng bộ với Google Sheets của bạn
+  // Dữ liệu mẫu ban đầu
   const SAMPLE_DATA = [
     {
       id: "job-1",
@@ -768,7 +839,8 @@
 
     renderJobs();
     bindEvents();
-    setupPasteListener(); // Kích hoạt bắt sự kiện Ctrl+V ảnh chụp màn hình
+    setupPasteListener();
+    setupDragDropListener();
   });
 
   function bindEvents() {
@@ -780,7 +852,26 @@
     });
   }
 
-  /* ================= TỰ ĐỘNG BẮT SỰ KIỆN CTRL+V ĐỂ NHẬN ẢNH ================= */
+  /* ================= XỬ LÝ ẢNH (BẤM CHỌN FILE TỪ ĐIỆN THOẠI HOẶC KÉO THẢ) ================= */
+  function handleImageFileSelect(e) {
+    const file = e.target.files[0];
+    if (file) loadFileAsImage(file);
+  }
+
+  function setupDragDropListener() {
+    const box = document.getElementById('uploadDropBox');
+    box.addEventListener('dragover', (e) => { e.preventDefault(); box.classList.add('dragover'); });
+    box.addEventListener('dragleave', () => box.classList.remove('dragover'));
+    box.addEventListener('drop', (e) => {
+      e.preventDefault();
+      box.classList.remove('dragover');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        loadFileAsImage(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  /* ================= TỰ ĐỘNG BẮT SỰ KIỆN CTRL+V (DÁN ẢNH CHỤP MÀN HÌNH) ================= */
   function setupPasteListener() {
     window.addEventListener('paste', (e) => {
       const items = (e.clipboardData || window.clipboardData)?.items;
@@ -791,26 +882,12 @@
           const file = items[i].getAsFile();
           if (file) {
             e.preventDefault();
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-              const fullDataUrl = evt.target.result;
-              pastedImageBase64 = {
-                mimeType: file.type || 'image/png',
-                data: fullDataUrl.split(',')[1],
-                dataUrl: fullDataUrl
-              };
+            loadFileAsImage(file);
+            switchView('add');
 
-              document.getElementById('screenThumb').src = fullDataUrl;
-              document.getElementById('screenshotPreview').style.display = 'flex';
-              document.getElementById('screenLabel').textContent = `Đã nhận ảnh (${(file.size / 1024).toFixed(1)} KB)`;
-              
-              switchView('add');
-
-              const statusBox = document.getElementById('statusBox');
-              statusBox.className = 'status-box success';
-              statusBox.innerHTML = `📸 <strong>Đã nhận ảnh chụp màn hình!</strong> Bấm nút phân tích để Gemini đọc nội dung JD.`;
-            };
-            reader.readAsDataURL(file);
+            const statusBox = document.getElementById('statusBox');
+            statusBox.className = 'status-box success';
+            statusBox.innerHTML = `📸 <strong>Đã nhận ảnh từ Clipboard!</strong> Bấm nút phân tích để Gemini đọc nội dung JD.`;
             return;
           }
         }
@@ -818,9 +895,28 @@
     });
   }
 
+  function loadFileAsImage(file) {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      const fullDataUrl = evt.target.result;
+      activeImageBase64 = {
+        name: file.name || 'screenshot.png',
+        mimeType: file.type || 'image/png',
+        data: fullDataUrl.split(',')[1],
+        dataUrl: fullDataUrl
+      };
+
+      document.getElementById('screenThumb').src = fullDataUrl;
+      document.getElementById('screenshotPreview').style.display = 'flex';
+      document.getElementById('screenLabel').textContent = `Đã nhận ảnh (${(file.size / 1024).toFixed(1)} KB)`;
+    };
+    reader.readAsDataURL(file);
+  }
+
   function removeScreenshot() {
-    pastedImageBase64 = null;
+    activeImageBase64 = null;
     document.getElementById('screenshotPreview').style.display = 'none';
+    document.getElementById('imgFileInput').value = '';
   }
 
   function switchView(viewName) {
@@ -1012,7 +1108,7 @@
     renderJobs();
   }
 
-  /* ================= PHÂN TÍCH GEMINI & LƯU ================= */
+  /* ================= PHÂN TÍCH BẰNG GEMINI & LƯU SHEET ================= */
   async function processAndSaveJob() {
     const apiKey = document.getElementById('apiKey').value.trim();
     const webhookUrl = document.getElementById('webhookUrl').value.trim();
@@ -1030,8 +1126,8 @@
       switchView('settings');
       return;
     }
-    if (!jdText && !pastedImageBase64 && !jobUrl) {
-      alert('Vui lòng nhập Link tin tuyển dụng, dán văn bản JD hoặc nhấn Ctrl+V dán ảnh!');
+    if (!jdText && !activeImageBase64 && !jobUrl) {
+      alert('Vui lòng chọn ảnh chụp JD, dán link hoặc nhập văn bản tin tuyển dụng!');
       return;
     }
 
@@ -1055,11 +1151,11 @@
       const contentsParts = [];
       if (jobUrl) contentsParts.push({ text: `LINK BÀI ĐĂNG GỐC: ${jobUrl}\n` });
       if (jdText) contentsParts.push({ text: `NỘI DUNG JD:\n${jdText}` });
-      if (pastedImageBase64) {
+      if (activeImageBase64) {
         contentsParts.push({
           inlineData: {
-            mimeType: pastedImageBase64.mimeType,
-            data: pastedImageBase64.data
+            mimeType: activeImageBase64.mimeType,
+            data: activeImageBase64.data
           }
         });
       }
@@ -1103,12 +1199,12 @@
         status: initialStatus
       };
 
-      // 1. Lưu LocalStorage
+      // 1. Lưu vào LocalStorage
       const currentJobs = getJobs();
       currentJobs.unshift(newJob);
       saveJobs(currentJobs);
 
-      // 2. Gửi Webhook sang Google Sheets
+      // 2. Gửi Webhook sang Google Sheets (Nếu đã cấu hình Webhook URL)
       if (webhookUrl) {
         statusBox.textContent = '🚀 Đang lưu dòng mới vào Google Sheets...';
         try {
